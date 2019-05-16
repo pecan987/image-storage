@@ -9,6 +9,7 @@
 namespace Ublaboo\ImageStorage;
 
 use Nette;
+use Tracy\Debugger;
 
 class ImageStorage
 {
@@ -314,7 +315,12 @@ class ImageStorage
 
 			$_image->resize($size[0], $size[1], $flag);
 
-			$_image->sharpen()->save(
+			$ext = strtolower(pathinfo($identifier, PATHINFO_EXTENSION));
+			if($ext != 'png') {
+				$_image->sharpen();
+			}
+
+			$_image->save(
 				implode('/', [$this->data_path, $identifier]),
 				$quality
 			);

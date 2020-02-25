@@ -1,33 +1,31 @@
-<?php
+<?php declare(strict_types = 1);
 
-/**
- * @copyright   Copyright (c) 2016 ublaboo <ublaboo@paveljanda.com>
- * @author      Pavel Janda <me@paveljanda.com>
- * @package     Ublaboo
- */
+namespace Contributte\ImageStorage;
 
-namespace Ublaboo\ImageStorage;
+use Nette\Application\UI\ITemplate;
 
-use Ublaboo;
+//phpcs:disable SlevomatCodingStandard.Classes.SuperfluousTraitNaming.SuperfluousSuffix
 
 trait ImageStoragePresenterTrait
 {
-	
-	/**
-	 * @var Ublaboo\ImageStorage\ImageStorage
-	 */
+
+	/** @var ImageStorage */
 	public $imageStorage;
 
-
-	public function injectImageStorage(Ublaboo\ImageStorage\ImageStorage $imageStorage) {
+	public function injectImageStorage(ImageStorage $imageStorage): void
+	{
 		$this->imageStorage = $imageStorage;
 	}
-	
-	public function createTemplate() {
+
+	public function createTemplate(): ITemplate
+	{
 		$template = parent::createTemplate();
-		
+
 		$template->imageStorage = $this->imageStorage;
-		
+
 		return $template;
 	}
+
 }
+
+// phpcs:enable

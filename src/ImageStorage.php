@@ -10,6 +10,7 @@ use Nette\Http\FileUpload;
 use Nette\SmartObject;
 use Nette\Utils\Image as NetteImage;
 use Nette\Utils\Strings;
+use Nette\Utils\UnknownImageFileException;
 
 class ImageStorage
 {
@@ -75,8 +76,9 @@ class ImageStorage
 
 	/**
 	 * @param mixed $arg
+	 * @param bool $onlyChangedImages
 	 */
-	public function delete($arg): void
+	public function delete($arg, $onlyChangedImages = false): void
 	{
 		$script = is_object($arg) && $arg instanceof Image
 			? ImageNameScript::fromIdentifier($arg->identifier)
@@ -84,13 +86,16 @@ class ImageStorage
 
 		$pattern = preg_replace('/__file__/', $script->name, ImageNameScript::PATTERN);
 		$dir = implode('/', [$this->data_path, $script->namespace, $script->prefix]);
+		$origFile = $script->name . '.' . $script->extension;
 
 		if (!file_exists($dir)) {
 			return;
 		}
 
 		foreach (new DirectoryIterator($dir) as $file_info) {
-			if (preg_match($pattern, $file_info->getFilename())) {
+			if (preg_match($pattern, $file_info->getFilename())
+				&& (!$onlyChangedImages || ($onlyChangedImages && $origFile !== $file_info->getFilename()))
+			) {
 				unlink($file_info->getPathname());
 			}
 		}
@@ -211,7 +216,11 @@ class ImageStorage
 				return new Image(false, '#', '#', 'Can not find image');
 			}
 
-			$_image = NetteImage::fromFile($file);
+			try {
+				$_image = NetteImage::fromFile($file);
+			} catch (UnknownImageFileException $e) {
+				return new Image(false, '#', '#', 'Unknown type of file');
+			}
 
 			if ($script->hasCrop() && !$isNoImage) {
 				call_user_func_array([$_image, 'crop'], $script->crop);
@@ -232,7 +241,7 @@ class ImageStorage
 			$_image->resize($size[0], $size[1], $flag);
 
 			$ext = strtolower(pathinfo($identifier, PATHINFO_EXTENSION));
-			if($ext != 'png') {
+			if($ext !== 'png') {
 				$_image->sharpen();
 			}
 
@@ -247,7 +256,7 @@ class ImageStorage
 
 	/**
 	 * @throws ImageStorageException
-	 * @return Image|array
+	 * @return Image|mixed[]
 	 */
 	public function getNoImage(bool $return_image = false)
 	{
@@ -259,13 +268,13 @@ class ImageStorage
 			$new_path = sprintf('%s/%s', $this->data_path, $identifier);
 
 			if (!file_exists($new_path)) {
-				$dirName = dirname($identifier);
+				$dirName = dirname($new_path);
 
 				if (!file_exists($dirName)) {
 					mkdir($dirName, 0777, true);
 				}
 
-				if (!file_exists($dirName) || !is_writable($new_path)) {
+				if (!file_exists($dirName) || !is_writable($dirName)) {
 					throw new ImageStorageException('Could not create default no_image.png. ' . $dirName . ' does not exist or is not writable.');
 				}
 

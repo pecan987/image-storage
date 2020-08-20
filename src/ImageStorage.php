@@ -295,7 +295,11 @@ class ImageStorage
 				return new Image(NULL, '#', '#', 'Can not find image');
 			}
 
-			$_image = Nette\Utils\Image::fromFile($file);
+			try {
+				$_image = Nette\Utils\Image::fromFile($file);
+			} catch (Nette\Utils\UnknownImageFileException $e) {
+				return new Image(false, '#', '#', 'Unknown type of file');
+			}
 
 			if ($script->hasCrop() && !$isNoImage) {
 				call_user_func_array([$_image, 'crop'], $script->crop);
@@ -337,7 +341,7 @@ class ImageStorage
 
 	/**
 	 * Return ImageNameScript and file for no-image image
-	 * @return array
+	 * @return Image|mixed[]
 	 */
 	public function getNoImage($return_image = FALSE)
 	{

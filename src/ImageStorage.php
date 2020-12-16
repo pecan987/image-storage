@@ -7,6 +7,7 @@ use Contributte\ImageStorage\Exception\ImageResizeException;
 use Contributte\ImageStorage\Exception\ImageStorageException;
 use DirectoryIterator;
 use Nette\Http\FileUpload;
+use Nette\InvalidArgumentException;
 use Nette\SmartObject;
 use Nette\Utils\Image as NetteImage;
 use Nette\Utils\Strings;
@@ -245,10 +246,15 @@ class ImageStorage
 				$_image->sharpen();
 			}
 
-			$_image->save(
-				implode('/', [$this->data_path, $identifier]),
-				$quality
-			);
+			try {
+				$_image->save(
+					implode('/', [$this->data_path, $identifier]),
+					$quality
+				);
+			} catch (InvalidArgumentException $e) {
+				return new Image(false, '#', '#', 'Unknown type of file');
+			}
+
 		}
 
 		return new Image($this->friendly_url, $this->data_dir, $this->data_path, $identifier, ['script' => $script]);

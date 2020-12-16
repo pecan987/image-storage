@@ -252,7 +252,7 @@ class ImageStorage
 					$quality
 				);
 			} catch (InvalidArgumentException $e) {
-				return new Image(false, '#', '#', 'Unknown type of file');
+				return $this->getNoImage(true);
 			}
 
 		}
